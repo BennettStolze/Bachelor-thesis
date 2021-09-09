@@ -1,0 +1,255 @@
+#-----------------------------------------------------#
+############### RESULTS VISUALIZATION #################
+#-----------------------------------------------------#
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(cowplot)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(magick)
+library(gridGraphics)
+
+setwd("C:/Users/benne/Google Drive/Studium/Biologie/Bachelorarbeit/WhiteStork/Bachelor-thesis")
+
+data <- read_excel("Results_r.xlsx")
+data$var <- as.character(data$var)
+data$value <- as.numeric(data$value)
+
+#--------------------------------------------------------------
+# Subsets für einzelne Disziplinen
+niche_overlap <- subset(data, test=="niche_overlap" & year=="2000_2019" &
+                        var != "both" & var !="climate" & var !="climate_old" &
+                        method !="random" & method !="range")
+niche_sim <- subset(data, test=="niche_sim" & year=="2000_2019" & var != "both" & var !="climate")
+niche_overlap_suppl <- subset(data, test=="niche_overlap" & year=="2000_2019" &
+                          var != "both" & var !="climate" & var !="climate_old")
+niche_2000_2019 <- subset(data, year=="2000_2019")
+
+#--------------------------------------------------------------
+### Create stacked bar graphs with labels
+#--------------------------------------------------------------
+vis_niche_overlap <- ggplot(data = niche_overlap, aes(x = var, y = value)) +
+  geom_col(aes(fill = var), width = 0.5, show.legend = F) +
+  #ggtitle("Level of Seasonal Niche Overlap") +
+  xlab("Variable set") + ylab("seasonal niche overlap (D)") +
+  geom_text(aes(label = stat(y %>% round(2)), group = year), stat = 'summary', fun = sum, hjust = -0.3) + 
+  geom_text(aes(label = var), y= 0.02, vjust= -3, hjust= 0) + 
+  coord_flip() +
+  theme_classic() +
+  theme(axis.text.y=element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "black", size=1)) +
+  scale_y_continuous(limits= c(0,1), breaks=seq(0, 1, by = 0.1), expand = c(0,0)) +
+  geom_text(x=1, y=0.495, label="*") +
+  geom_text(x=2, y=0.9, label="*")
+vis_niche_overlap
+
+vis_niche_sim <- ggplot(data = niche_sim, aes(x = method, y = value)) +
+  geom_col(aes(fill = method), width = 0.5, show.legend = F,) +
+  ggtitle("Niche Similarity Test with different variable sets") +
+  xlab("Methods for generating pseudo-absence data") + ylab("P-Value") +
+  ylim(0,0.05) +
+  geom_text(aes(label = stat(y) , group = year), stat = 'summary', fun = sum, vjust = -0.8) + 
+  facet_grid(~var)
+vis_niche_sim
+
+vis_niche_overlap_suppl <- ggplot(data = niche_overlap_suppl, aes(x = method, y = value)) +
+  geom_col(aes(fill = method), width = 0.5, show.legend = F,) +
+  ggtitle("Niche Overlap with different variable sets") +
+  xlab("Methods for generating pseudo-absence data") + ylab("seasonal niche overlap (D)") +
+  theme_classic() +
+  theme(axis.text.y=element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "black", size=0.8)) +
+  geom_text(aes(label = stat(y) , group = year), stat = 'summary', fun = sum, vjust = -0.8) + 
+  facet_grid(~var)
+vis_niche_overlap_suppl
+
+#--------------------------------------------------------------
+### Map + Presence + Range
+#--------------------------------------------------------------
+# Map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+# crop to extent
+e <- c(xmin = -25, xmax = 52, ymin = -40, ymax = 70)
+world <- st_crop(world,e)
+## gather point records to one data.frame and indicate summer/winter records
+# Winter
+vis_gbif_wstork_2000_2019_winter <- data.frame(gbif_wstork_2000_2019_winter)
+vis_gbif_wstork_2000_2019_winter$season <- "winter"
+# Summer
+vis_gbif_wstork_2000_2019_summer <- data.frame(gbif_wstork_2000_2019_summer)
+vis_gbif_wstork_2000_2019_summer$season <- "summer"
+# bind both datasets
+vis_gbif_wstork_2000_2019 <- rbind(vis_gbif_wstork_2000_2019_winter, vis_gbif_wstork_2000_2019_summer)
+
+#
+ggplot(data = world) +
+  theme_bw() +
+  geom_sf() +
+  xlim(-25,52) + ylim(-40,70) +
+  labs( x = "Longitude", y = "Latitude") +
+  ggtitle("White Stork Point Records") + 
+  geom_polygon(data = range_wstork_wint, 
+               aes(y = lat, x = long, group = group,), 
+               show.legend = F, alpha = 0.4, fill = "blue") +
+  geom_point(data = vis_gbif_wstork_2000_2019,
+             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = season),
+             size = 1.5, alpha = 0.2, shape = 21, 
+             show.legend = F)
+
+### WINTER
+ggplot(data = world) +
+  theme_bw() +
+  geom_sf() +
+  xlim(-25,52) + ylim(-40,70) +
+  labs( x = "Longitude", y = "Latitude") +
+  ggtitle("White Stork Point Records (Winter) [n = 4065]") + 
+  geom_point(data = gbif_wstork_2000_2019_winter,
+             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+             size = 1, alpha = 0.8, shape = 16, colour = "black",
+             show.legend = F) +
+  geom_polygon(data = range_wstork_wint, 
+               aes(y = lat, x = long, group = group,), 
+               show.legend = F, alpha = 0.2, fill = "blue")
+### SUMMER
+ggplot(data = world) +
+  theme_bw() +
+  geom_sf() +
+  xlim(-25,52) + ylim(-40,70) +
+  labs( x = "Longitude", y = "Latitude") +
+  ggtitle("White Stork Point Records (Breeding) [n = 3743]") + 
+  geom_point(data = gbif_wstork_2000_2019_summer,
+             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+             size = 1, alpha = 0.8, shape = 16, colour = "black",
+             show.legend = F) +
+  geom_polygon(data = range_wstork_breed, 
+               aes(y = lat, x = long, group = group,), 
+               show.legend = F, alpha = 0.3, fill = "red")
+
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+#--------------------------------------------------------------
+### WINTER
+## placing buffer
+# assigning presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- gbif_wstork_2000_2019_winter
+# CRS
+coordinates(vis_gbif_wstork_2000_2019_winter_bg_buffer) <- ~decimalLongitude + decimalLatitude
+projection(vis_gbif_wstork_2000_2019_winter_bg_buffer) <- CRS('+proj=longlat +datum=WGS84')
+# placing buffer of 200km radius around our presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- buffer(vis_gbif_wstork_2000_2019_winter_bg_buffer, width=200000)
+
+### SUMMER
+## placing buffer
+# assigning presence points
+vis_gbif_wstork_2000_2019_summer_bg_buffer <- gbif_wstork_2000_2019_summer
+# CRS
+coordinates(vis_gbif_wstork_2000_2019_summer_bg_buffer) <- ~decimalLongitude + decimalLatitude
+projection(vis_gbif_wstork_2000_2019_summer_bg_buffer) <- CRS('+proj=longlat +datum=WGS84')
+# placing buffer of 200km radius around our presence points
+vis_gbif_wstork_2000_2019_summer_bg_buffer <- buffer(vis_gbif_wstork_2000_2019_summer_bg_buffer, width=200000)
+
+
+
+
+
+
+### WINTER
+vis_points_buffer_winter <- ggplot(data = world) +
+  theme_bw() +
+  geom_sf() +
+  xlim(-25,52) + ylim(-40,70) +
+  labs( x = "Longitude", y = "Latitude") +
+  #ggtitle("White Stork Point Records (Winter) & Buffer") + 
+  geom_point(data = gbif_wstork_2000_2019_winter,
+             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+             size = 0.5, alpha = 1, shape = 16, colour = "black",
+             show.legend = F) +
+  geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer, 
+               aes(y = lat, x = long, group = group), 
+               show.legend = F, alpha = 0.3, fill = "blue") #+
+#  geom_point(data = gbif_wstork_2000_2019_winter_bg_buffer,
+#             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "red"),
+#             size = 1, alpha = 0.2, shape = 16, colour = "red",
+#             show.legend = F)
+
+### SUMMER
+vis_points_buffer_summer <- ggplot(data = world) +
+  theme_bw() +
+  geom_sf() +
+  xlim(-25,52) + ylim(-40,70) +
+  labs( x = "Longitude", y = "Latitude") +
+  #ggtitle("White Stork Point Records (Summer) & Buffer") + 
+  geom_point(data = gbif_wstork_2000_2019_summer,
+             mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+             size = 0.5, alpha = 1, shape = 16, colour = "black",
+             show.legend = F) +
+  geom_polygon(data = vis_gbif_wstork_2000_2019_summer_bg_buffer, 
+               aes(y = lat, x = long, group = group), 
+               show.legend = F, alpha = 0.3, fill = "red")
+
+# Title
+title <- ggdraw() + 
+  draw_label(
+    "Distribution of White Storks",
+    fontface = 'bold',
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+
+### Cowplot summer & winter
+# Row with both distributions
+vis_row <- plot_grid(vis_points_buffer_winter, vis_points_buffer_summer, 
+                     labels = c('Wintering Season', 'Breeding Season'), label_size = 12)
+# add title to row
+plot_grid(title, vis_row, ncol = 1, rel_heights = c(0.1, 1)) # rel_heights values control vertical title margins
+
+#----------------------------------------------------------------------------
+### PCA & Overlap
+#----------------------------------------------------------------------------
+# Grid for Climate Niche_dyn and PCA
+grid_climate <- ggdraw() +
+  draw_image("./results/final/niche_dyn_climseas.png", x=-.25,scale=1) +
+  draw_image("./results/final/pca_climseas.png", x=.23, y=0.01, scale=.9) +
+  draw_label("Climate", angle=90, size = 15, x=0.02)
+
+# Grid for Landcover Niche_dyn and PCA
+grid_lc <- 
+  ggdraw() +
+  draw_image("./results/final/niche_dyn_lc.png", x=-.25, scale=1) +
+  draw_image("./results/final/pca_lc.png", x=.23, y=0.01, scale=.9) +
+  draw_label("Landcover", angle=90, size = 15, x=0.02)
+
+# Grid Title
+grid_title <- ggdraw() +
+  draw_label("Seasonal Niche Overlap", size=25, fontface = 'bold') + 
+  theme(plot.margin = margin(0, 0, 0, 0))
+
+# plot entore Grid
+plot_grid(grid_title, grid_climate, grid_lc,
+          ncol=1,
+          rel_heights = c(0.1, 1, 1))
+
+
+  line2 <- ggdraw() +
+  draw_image("./results/final/niche_dyn_climseas.png", x=-.3, y=.21, scale=.42) +
+  draw_image("./results/final/niche_dyn_lc.png", x=-.3, y=-.265, scale=.42) +
+  draw_image("./results/final/pca_climseas.png", x=.15, y=.25, scale=.42) +
+  draw_image("./results/final/pca_lc.png", x=.15, y=-.265, scale=.42) +
+  draw_label("Seasonal Niche Overlap", y=0.98, size=25) + # Title
+  draw_label("Correlation Circle of the PCA", x=.75 ,y=0.97) 
+
+
+image <- ("./results/final/niche_dyn_climseas.png")
+
+

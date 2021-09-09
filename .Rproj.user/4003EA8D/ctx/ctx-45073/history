@@ -1,0 +1,512 @@
+cropscover <- aggregate(cropscover, fact=10, fun=mean)
+writeRaster(cropscover, path="./variables", filename = "cropscover.tif", format = 'GTiff', overwrite = T)
+res(cropscover)
+# Copernicus Global Land Service: Grass Cover 100m: collection 3: epoch 201 - 100m
+grasscover <- raster("./variables/PROBAV_LC100_global_v3.0.1_2019-nrt_Grass-CoverFraction-layer_EPSG-4326.tif")
+grasscover <- aggregate(grasscover, fact=10, fun=mean)
+library(ncdf4) # Interface to Unidata netCDF Format Data
+library(raster) # Geographic/Spatial Data Analysis and Modeling
+citation("dplyr")
+citation("raster")
+citation("ncdf4")
+dismo
+library(dismo) # Library for Distribution-models
+library(mecofun) # Variable selection from UP Macroecology
+citation("ecospat")
+load("C:/Users/benne/Google Drive/Studium/Biologie/Bachelorarbeit/WhiteStork/Bachelor-thesis/env.RData")
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(cowplot)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+### Map + Presence + Range
+# Map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+# crop to extent
+e <- c(xmin = -25, xmax = 52, ymin = -40, ymax = 70)
+world <- st_crop(world,e)
+## gather point records to one data.frame and indicate summer/winter records
+# Winter
+vis_gbif_wstork_2000_2019_winter <- data.frame(gbif_wstork_2000_2019_winter)
+vis_gbif_wstork_2000_2019_winter$season <- "winter"
+# Summer
+vis_gbif_wstork_2000_2019_summer <- data.frame(gbif_wstork_2000_2019_summer)
+vis_gbif_wstork_2000_2019_summer$season <- "summer"
+# bind both datasets
+vis_gbif_wstork_2000_2019 <- rbind(vis_gbif_wstork_2000_2019_winter, vis_gbif_wstork_2000_2019_summer)
+#
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records") +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.4, fill = "blue") +
+geom_point(data = vis_gbif_wstork_2000_2019,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = season),
+size = 1.5, alpha = 0.2, shape = 21,
+show.legend = F)
+show.legend = F)
+### SUMMER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Breeding) [n = 5227]") +
+geom_polygon(data = range_wstork_breed,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.5, fill = "red") +
+geom_point(data = gbif_wstork_2000_2019_summer,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.1, shape = 16, colour = "black",
+show.legend = F)
+### SUMMER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Breeding) [n = 5227]") +
+geom_polygon(data = range_wstork_breed,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.3, fill = "red") +
+geom_point(data = gbif_wstork_2000_2019_summer,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.5, shape = 16, colour = "black",
+show.legend = F)
+### SUMMER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Breeding) [n = 5227]") +
+geom_point(data = gbif_wstork_2000_2019_summer,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.5, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_breed,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.2, fill = "red")
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4898]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.5, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.2, fill = "blue")
+library(CoordinateCleaner) # Coordinate cleaning for data cleaning
+##################################################
+### 1.3 - CROSS-CHECKING AND CLEANING GBIF DATA #
+##################################################
+?clean_coordinates
+View(gbif_wstork_2000_2004_summer)
+View(gbif_wstork_2000_2019_winter_buffer)
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.5, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.2, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.5, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.1, fill = "blue")
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.1, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Breeding) [n = 3743]") +
+geom_point(data = gbif_wstork_2000_2019_summer,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_breed,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.1, fill = "red")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Breeding) [n = 3743]") +
+geom_point(data = gbif_wstork_2000_2019_summer,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_breed,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.2, fill = "red")
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = range_wstork_wint,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = group,),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+show.legend = F, alpha = 0.1, fill = "blue")
+View(gbif_wstork_2000_2019_winter_bg_buffer)
+View(gbif_wstork_2000_2019_summer_bg_buffer)
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = group,),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = occ),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = group),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = id),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = occ),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = FALSE),
+show.legend = F, alpha = 0.1, fill = "blue")
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = TRUE),
+show.legend = F, alpha = 0.1, fill = "blue")
+View(gbif_wstork_2000_2019_summer_bg_buffer_points)
+## Presence + 200km Buffer + BG outside of Buffer
+# Mask
+plot(mask, col="grey", legend=F)
+## Presence + 200km Buffer + BG outside of Buffer
+# Mask
+plot(mask, col="grey", legend=F)
+### raster files ###
+mask <- raster("./raster/mask.grd")
+library(rgbif) # Biodiversity data
+library(CoordinateCleaner) # Coordinate cleaning for data cleaning
+library(dplyr) # Data manipulation
+library(raster) # Geographic/Spatial Data Analysis and Modeling
+#library(dismo) # Library for Distribution-models
+library(ecospat) # PCA, Niche Similarity Analysis
+library(corrplot) # Graphical display of correlation matrix
+library(devtools) # Collection of package development tools
+#library(mecofun) # Variable selection from UP Macroecology
+library(ncdf4) # Interface to Unidata netCDF Format Data
+library(rgeos) # Interface to Geometry Engine
+## Presence + 200km Buffer + BG outside of Buffer
+# Mask
+plot(mask, col="grey", legend=F)
+# Background - Buffer
+plot(gbif_wstork_2000_2019_winter_bg_buffer, col="red", add=T)
+View(gbif_wstork_2000_2019_summer_bg_buffer_points)
+View(gbif_wstork_2000_2019_summer)
+View(gbif_wstork_2000_2019_winter)
+View(gbif_wstork_2000_2019_winter_buffer)
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+## placing buffer
+# assingning presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- gbif_wstork_2000_2019_winter
+# placing buffer of 200km radius around our presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- buffer(vis_gbif_wstork_2000_2019_winter_bg_buffer, width=200000)
+#--------------------------------------------------------------
+### Map + Presence + Buffer
+### WINTER
+## placing buffer
+# assingning presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- gbif_wstork_2000_2019_winter
+# CRS
+coordinates(vis_gbif_wstork_2000_2019_winter_bg_buffer) <- ~decimalLongitude + decimalLatitude
+projection(vis_gbif_wstork_2000_2019_winter_bg_buffer) <- CRS('+proj=longlat +datum=WGS84')
+# placing buffer of 200km radius around our presence points
+vis_gbif_wstork_2000_2019_winter_bg_buffer <- buffer(vis_gbif_wstork_2000_2019_winter_bg_buffer, width=200000)
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = decimalLatitude, x = decimalLongitude, group = TRUE),
+show.legend = F, alpha = 0.1, fill = "blue")
+View(vis_gbif_wstork_2000_2019_winter_bg_buffer)
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = TRUE),
+show.legend = F, alpha = 0.1, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = group),
+show.legend = F, alpha = 0.1, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = group),
+show.legend = F, alpha = 0.5, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 0.8, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = group),
+show.legend = F, alpha = 0.2, fill = "blue")
+ggplot(data = world) +
+theme_bw() +
+geom_sf() +
+xlim(-25,52) + ylim(-40,70) +
+labs( x = "Longitude", y = "Latitude") +
+ggtitle("White Stork Point Records (Winter) [n = 4065]") +
+geom_point(data = gbif_wstork_2000_2019_winter,
+mapping = aes(y = decimalLatitude, x = decimalLongitude, colour = "black"),
+size = 1, alpha = 1, shape = 16, colour = "black",
+show.legend = F) +
+geom_polygon(data = vis_gbif_wstork_2000_2019_winter_bg_buffer,
+aes(y = lat, x = long, group = group),
+show.legend = F, alpha = 0.2, fill = "blue")
+library(rgbif) # Biodiversity data
+library(CoordinateCleaner) # Coordinate cleaning for data cleaning
+library(dplyr) # Data manipulation
+library(raster) # Geographic/Spatial Data Analysis and Modeling
+#library(dismo) # Library for Distribution-models
+library(ecospat) # PCA, Niche Similarity Analysis
+library(corrplot) # Graphical display of correlation matrix
+library(devtools) # Collection of package development tools
+#library(mecofun) # Variable selection from UP Macroecology
+library(ncdf4) # Interface to Unidata netCDF Format Data
+library(rgeos) # Interface to Geometry Engine
